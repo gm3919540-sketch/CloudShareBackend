@@ -6,16 +6,21 @@ import com.CloudShare.CloudShare.repository.ProfileRepository;
 import com.mongodb.DuplicateKeyException;
 import com.mongodb.MongoWriteException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProfileService {
     private  final ProfileRepository profileRepository;
     public ProfileDto createProfile(ProfileDto profileDto){
+        log.info("inside createProfile");
         if(profileRepository.existsByClerkId(profileDto.getClerkId())){
             return updateProfile(profileDto);
         }
@@ -30,9 +35,6 @@ public class ProfileService {
                 .build();
 
         profile =profileRepository.save(profile);
-
-
-
       return ProfileDto.builder()
               .id(profile.getId())
               .clerkId(profile.getClerkId())
@@ -46,6 +48,9 @@ public class ProfileService {
     }
     public  ProfileDto updateProfile(ProfileDto profileDto){
       ProfileDocument existingProfile=profileRepository.findByClerkId(profileDto.getClerkId());
+        if(existingProfile == null){
+            return null;
+        }
       if(existingProfile!=null){
           //update fields if provided
           if(profileDto.getEmail() !=null && !profileDto.getEmail().isEmpty()){
@@ -84,5 +89,16 @@ public class ProfileService {
       if(existingProfile !=null){
           profileRepository.delete(existingProfile);
       }
+    }
+   public ProfileDocument getCurrrentProfile(){
+        log.info("inside get profile");
+        if(SecurityContextHolder.getContext().getAuthentication()==null){
+            log.info("user not autheticated");
+            throw  new UsernameNotFoundException("User not Authentication");
+
+        }
+        String clerkId = SecurityContextHolder.getContext().getAuthentication().getName();
+       log.info("clerk Id in profile doc" +clerkId);
+        return profileRepository.findByClerkId(clerkId);
     }
 }
