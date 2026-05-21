@@ -165,7 +165,7 @@ APIs were tested using:
 
 ---
 
-# 👨‍💻 Author
+#  Author
 
 Developed by Gaurav
 
